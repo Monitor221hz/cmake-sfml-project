@@ -1,7 +1,9 @@
 #include <SFML/Graphics.hpp>
-
+#include <physfs.h>
 int main()
 {
+    PHYSFS_init(NULL);
+    PHYSFS_mount("assets.zip", "assets", 1); 
     auto window = sf::RenderWindow({1920u, 1080u}, "CMake SFML Project");
     window.setFramerateLimit(144);
     sf::Clock deltaClock; 
@@ -19,4 +21,6 @@ int main()
         window.display();
         sf::Time delta = deltaClock.restart(); 
     }
+
+    PHYSFS_deinit();
 }
