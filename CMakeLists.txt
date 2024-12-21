@@ -15,15 +15,32 @@ FetchContent_MakeAvailable(SFML)
 include(cmake/headerlist.cmake)
 include(cmake/sourcelist.cmake)
 include_directories(AFTER include)
-add_executable(main src/main.cpp ${headers} ${sources})
-target_link_libraries(main PRIVATE sfml-graphics)
-target_compile_features(main PRIVATE cxx_std_17)
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-file(ARCHIVE_CREATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bin/assets.zip" PATHS "${CMAKE_SOURCE_DIR}/assets" FORMAT "zip")
+add_executable(${PROJECT_NAME} src/main.cpp ${headers} ${sources})
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+
+set(SRC_ASSETS_FOLDER "${CMAKE_SOURCE_DIR}/assets")
+
+if (EXISTS "${SRC_ASSETS_FOLDER}")
+        add_custom_command(
+        TARGET "${PROJECT_NAME}"
+        POST_BUILD 
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory_if_different "${SRC_ASSETS_FOLDER}" "${CMAKE_CURRENT_BINARY_DIR}/bin/assets"
+        )
+
+        add_custom_command(
+            TARGET ${PROJECT_NAME}
+            PRE_BUILD
+            COMMAND ${CMAKE_COMMAND} -E tar cvf ${CMAKE_CURRENT_BINARY_DIR}/bin/assets.zip --format=zip -- .
+            WORKING_DIRECTORY ${SRC_ASSETS_FOLDER}
+        )
+endif()
+
+
 if(WIN32)
     add_custom_command(
-        TARGET main
+        TARGET ${PROJECT_NAME}
         COMMENT "Copy OpenAL DLL"
-        PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${SFML_SOURCE_DIR}/extlibs/bin/$<IF:$<EQUAL:${CMAKE_SIZEOF_VOID_P},8>,x64,x86>/openal32.dll $<TARGET_FILE_DIR:main>
+        PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${SFML_SOURCE_DIR}/extlibs/bin/$<IF:$<EQUAL:${CMAKE_SIZEOF_VOID_P},8>,x64,x86>/openal32.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
         VERBATIM)
 endif()
